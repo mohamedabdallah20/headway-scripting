@@ -30,6 +30,10 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
+app.get('/', (req, res) => {
+  res.send('Welcome to the User API!');
+})
+
 // CRUD Operations for Users
 
 /**
