@@ -1,2 +1,10 @@
 node_modules
-.Dockerfile
+Dockerfile
+.dockerignore
+db/
+docker-compose.yaml
+.git
+.gitignore
+build-push-docker.log
+run-container.log
+stop-remove-container.log

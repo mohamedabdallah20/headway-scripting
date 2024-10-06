@@ -4,6 +4,7 @@ WORKDIR /app
 
 COPY package*.json ./
 
+# Install dependencies just for production
 RUN npm install --production
 
 ENV NODE_ENV=production
@@ -12,4 +13,4 @@ COPY . .
 
 EXPOSE 3000
 
-CMD [ "node", "index.js" ]
+CMD [ "node", "./src/index.js" ]

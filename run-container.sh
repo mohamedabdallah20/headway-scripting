@@ -1,0 +1,26 @@
+#!/bin/bash
+
+account=mohamedabdallah0
+tag=latest
+log_file=./run-container.log
+image_name=node-sqlite-app
+container_name=node-sqlite-app-container
+
+
+> $log_file
+
+if [ "$(docker ps -a -q -f name=$container_name)" ]; then
+    echo "Stopping and removing existing container $container_name..."
+    docker stop $container_name >> $log_file 2>&1
+    docker rm $container_name >> $log_file 2>&1
+fi
+
+echo "Running Docker container..."
+docker run -d -p 3000:3000 -v "$(pwd)"/db/users.db:/app/db/users.db --name=$container_name $account/$image_name:$tag >> $log_file 2>&1
+
+if [ $? -ne 0 ]; then
+    echo "Error running Docker container. Check the log file: $log_file"
+    exit 1
+fi
+
+echo "Docker container started successfully!"
