@@ -24,7 +24,7 @@ const swaggerOptions = {
       },
     ],
   },
-  apis: ['./index.js'], // Files containing Swagger annotations
+  apis: ['./src/index.js'], // Files containing Swagger annotations
 };
 
 const swaggerDocs = swaggerJsdoc(swaggerOptions);

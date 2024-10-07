@@ -1,5 +1,5 @@
 node_modules
-/db/users.db
+users.sqlite
 build-push-docker.log
 run-container.log
 stop-remove-container.log

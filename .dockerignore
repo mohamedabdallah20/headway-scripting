@@ -1,7 +1,7 @@
 node_modules
 Dockerfile
 .dockerignore
-db/
+db/users.sqlite
 docker-compose.yaml
 .git
 .gitignore
