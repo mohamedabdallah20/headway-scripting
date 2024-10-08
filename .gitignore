@@ -4,3 +4,5 @@ build-push-docker.log
 run-container.log
 stop-remove-container.log
 docker-compose.yaml
+db-backup
+db-backup.log
