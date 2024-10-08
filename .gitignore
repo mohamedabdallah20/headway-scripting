@@ -6,3 +6,4 @@ stop-remove-container.log
 docker-compose.yaml
 db-backup
 db-backup.log
+deployment.sh
