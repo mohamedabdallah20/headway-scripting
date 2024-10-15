@@ -1,7 +1,7 @@
 #!/bin/bash
 
-SOURCE_DB="./db/users.sqlite"  
-BACKUP_DIR="./db-backup"  
+SOURCE_DB="/home/hammo/giza/headway-scripting/db/users.sqlite"  
+BACKUP_DIR="/home/hammo/giza/headway-scripting/db-backup"  
 DATE=$(date +"%Y-%m-%d")
 
 BACKUP_FILE="${BACKUP_DIR}/sqlite_backup_${DATE}.sqlite"
