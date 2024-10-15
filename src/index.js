@@ -4,8 +4,10 @@ const db = require('./db');
 const bodyParser = require('body-parser')
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
+const cors = require('cors');
 
 const app = express();
+app.use(cors());
 app.use(bodyParser.json());
 const PORT = process.env.PORT || 3000;
 
