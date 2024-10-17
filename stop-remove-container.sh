@@ -1,12 +1,13 @@
 #!/bin/bash
-
 log_file=./stop-remove-container.log
-container_name=node-sqlite-app-container
 
 > $log_file
 
-if [ "$(docker ps -a -q -f name=$container_name)" ]; then
-    echo "Stopping and removing existing container $container_name..."
-    docker stop $container_name >> $log_file 2>&1
-    docker rm $container_name >> $log_file 2>&1
+echo "Stopping and removing Docker containers..."
+docker compose down >> $log_file 2>&1
+if [ $? -ne 0 ]; then
+    echo "Error stopping Docker containers. Check the log file: $log_file"
+    exit 1
 fi
+
+echo "Docker containers stopped and removed successfully!"
