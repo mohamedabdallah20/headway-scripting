@@ -1,7 +1,6 @@
-// app.js
 const express = require('express');
-const db = require('./db');
-const bodyParser = require('body-parser')
+const User = require('./db');
+const bodyParser = require('body-parser');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
 const cors = require('cors');
@@ -10,33 +9,6 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 const PORT = process.env.PORT || 3000;
-
-// Swagger setup
-const swaggerOptions = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'User API',
-      version: '1.0.0',
-      description: 'Simple CRUD API for managing users',
-    },
-    servers: [
-      {
-        url: `http://74.249.104.77:${PORT}`, // replace with your URL
-      },
-    ],
-  },
-  apis: ['./src/index.js'], // Files containing Swagger annotations
-};
-
-const swaggerDocs = swaggerJsdoc(swaggerOptions);
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
-
-app.get('/', (req, res) => {
-  res.send('Welcome to the User API! Version 2');
-})
-
-// CRUD Operations for Users
 
 /**
  * @swagger
@@ -49,23 +21,41 @@ app.get('/', (req, res) => {
  *         - email
  *         - mobile
  *       properties:
- *         id:
- *           type: integer
- *           description: The auto-generated id of the user
  *         name:
  *           type: string
- *           description: User's name
  *         email:
  *           type: string
- *           description: User's email
  *         mobile:
  *           type: string
- *           description: User's mobile number
- *       example:
- *         name: John Doe
- *         email: john@example.com
- *         mobile: "123456789"
  */
+
+// Swagger setup
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'User API',
+      version: '1.0.0',
+      description: 'Simple CRUD API for managing users',
+    },
+    servers: [
+      {
+        url: `http://74.249.104.77:${PORT}`,
+      },
+      {
+        url: `http://localhost:${PORT}`,
+      },
+    ],
+  },
+  apis: ['./src/index.js'],
+};
+
+const swaggerDocs = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
+app.get('/', (req, res) => {
+  res.send('Welcome to the User API! Version 2');
+});
 
 /**
  * @swagger
@@ -83,14 +73,13 @@ app.get('/', (req, res) => {
  *               items:
  *                 $ref: '#/components/schemas/User'
  */
-app.get('/users', (req, res) => {
-  db.all('SELECT * FROM users', [], (err, rows) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
-    res.json({ users: rows });
-  });
+app.get('/users', async (req, res) => {
+  try {
+    const users = await User.find();
+    res.json({ users });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 /**
@@ -108,20 +97,20 @@ app.get('/users', (req, res) => {
  *     responses:
  *       201:
  *         description: The created user.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
  */
-app.post('/users', (req, res) => {
-  const { name, email, mobile } = req.body;
-  db.run(
-    'INSERT INTO users (name, email, mobile) VALUES (?, ?, ?)',
-    [name, email, mobile],
-    function (err) {
-      if (err) {
-        res.status(500).json({ error: err.message });
-        return;
-      }
-      res.status(201).json({ id: this.lastID });
-    }
-  );
+app.post('/users', async (req, res) => {
+  try {
+    const { name, email, mobile } = req.body;
+    const user = new User({ name, email, mobile });
+    await user.save();
+    res.status(201).json({ user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 /**
@@ -134,28 +123,29 @@ app.post('/users', (req, res) => {
  *       - in: path
  *         name: id
  *         schema:
- *           type: integer
+ *           type: string
  *         required: true
  *         description: The user ID
  *     responses:
  *       200:
  *         description: The user description by id
- *         contents:
+ *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/User'
  *       404:
  *         description: User not found
  */
-app.get('/users/:id', (req, res) => {
-  const { id } = req.params;
-  db.get('SELECT * FROM users WHERE id = ?', [id], (err, row) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
+app.get('/users/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
-    res.json({ user: row });
-  });
+    res.json({ user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 /**
@@ -168,7 +158,7 @@ app.get('/users/:id', (req, res) => {
  *       - in: path
  *         name: id
  *         schema:
- *           type: integer
+ *           type: string
  *         required: true
  *         description: The user ID
  *     requestBody:
@@ -180,21 +170,26 @@ app.get('/users/:id', (req, res) => {
  *     responses:
  *       200:
  *         description: User updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
  */
-app.put('/users/:id', (req, res) => {
-  const { id } = req.params;
-  const { name, email, mobile } = req.body;
-  db.run(
-    'UPDATE users SET name = ?, email = ?, mobile = ? WHERE id = ?',
-    [name, email, mobile, id],
-    function (err) {
-      if (err) {
-        res.status(500).json({ error: err.message });
-        return;
-      }
-      res.json({ message: 'User updated', changes: this.changes });
+app.put('/users/:id', async (req, res) => {
+  try {
+    const { name, email, mobile } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { name, email, mobile },
+      { new: true }
+    );
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
-  );
+    res.json({ message: 'User updated', user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 /**
@@ -207,22 +202,23 @@ app.put('/users/:id', (req, res) => {
  *       - in: path
  *         name: id
  *         schema:
- *           type: integer
+ *           type: string
  *         required: true
  *         description: The user ID
  *     responses:
  *       200:
  *         description: User deleted successfully
  */
-app.delete('/users/:id', (req, res) => {
-  const { id } = req.params;
-  db.run('DELETE FROM users WHERE id = ?', [id], function (err) {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
+app.delete('/users/:id', async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
-    res.json({ message: 'User deleted', changes: this.changes });
-  });
+    res.json({ message: 'User deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Start the server

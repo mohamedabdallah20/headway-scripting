@@ -1,24 +1,31 @@
-// database.js
-const sqlite3 = require('sqlite3').verbose();
+const mongoose = require('mongoose');
 
-const db = new sqlite3.Database('./db/users.sqlite', (err) => {
-  if (err) {
-    console.error('Error opening database:', err.message);
-  } else {
-    db.run(
-      `CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        email TEXT,
-        mobile TEXT
-      )`,
-      (err) => {
-        if (err) {
-          console.log('Error creating table:', err.message);
-        }
-      }
-    );
-  }
+// Connect to MongoDB
+const mongoURI = process.env.MONGODB_URI;
+if (!mongoURI) {
+  console.error('MONGODB_URI is not defined');
+  process.exit(1);
+}
+
+mongoose.connect(mongoURI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
 });
 
-module.exports = db;
+const db = mongoose.connection;
+db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+db.once('open', () => {
+  console.log('Connected to MongoDB');
+});
+
+// Define the User schema
+const userSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true },
+  mobile: { type: String, required: true },
+});
+
+// Create a model for users
+const User = mongoose.model('User', userSchema);
+
+module.exports = User;
